@@ -7,7 +7,7 @@ const jsonParser = bodyParser.json()
 //JWT token
 const jwt = require('jsonwebtoken')
 jwtKey = "jwt";
-
+//mongoose connection
 const mongoose = require('mongoose')
 const dbUrl = 'mongodb+srv://palprem:prem@123@cluster0.llozo.mongodb.net/node-tuts?retryWrites=true&w=majority'
 
@@ -23,8 +23,29 @@ mongoose.connect(dbUrl, {
 //     if(err) console.log(err)
 //     console.log(users)
 // })
-
-app.get("/", (req, res) => {
+//varify token
+const verifyToken=(req, res, next)=>{
+	const bearerHeader = req.headers['authorization'];
+	
+	if(typeof bearerHeader !== 'undefined'){
+		// const bearer = bearerHeader.split(' ')
+		req.token=bearerHeader;
+		console.log(bearerHeader)
+		jwt.verify(req.token, jwtKey, (err, authData)=>{
+			if(err){
+				res.json({result: err})
+			}
+			else{
+				next();
+			}
+		})
+	}
+	else{
+		res.send("result:Token not provided!")
+	}
+}
+//fetch all users
+app.get("/", verifyToken, (req, res) => {
 	User.find().then((result) => {
 		// console.log(result);
 		res.send(result)
@@ -43,19 +64,18 @@ app.post('/login', jsonParser, (req, res) => {
 		})
 })
 
+// {
+//     name: req.body.name,
+//     email: req.body.email,
+//     address: req.body.address,
+//     password: req.body.password
+// }
+
 // POST API for posting for data
 app.post("/register", jsonParser, (req, res) => {
-	const data = new User({
-		name: req.body.name,
-		email: req.body.email,
-		address: req.body.address,
-		password: req.body.password
-	})
-	console.log(">>", req.body)
+	const data = new User(req.body)
+	console.log(">>", req.body.name)
 	data.save().then((result) => {
-		// jwt.sign({ result }, jwtKey, { expiresIn: '300s' }, (err, token) => {
-		// 	res.status(2001).json({ token })
-		// })
 		console.log("data saved")
 		res.status(201).json(result)
 	})
