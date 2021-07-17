@@ -6,10 +6,14 @@ var bodyParser = require('body-parser')
 const jsonParser = bodyParser.json()
 //JWT token
 const jwt = require('jsonwebtoken')
-jwtKey = "jwt";
+jwtKey = "jwt123";
 //mongoose connection
 const mongoose = require('mongoose')
 const dbUrl = 'mongodb+srv://palprem:prem@123@cluster0.llozo.mongodb.net/node-tuts?retryWrites=true&w=majority'
+
+//
+const cors = require('cors')
+app.use(cors())
 
 mongoose.connect(dbUrl, {
 	useNewUrlParser: true,
@@ -19,10 +23,7 @@ mongoose.connect(dbUrl, {
 		console.log("DB connected");
 	}).catch((error) => console.log("error"))
 
-// User.find({}, function(err, users){
-//     if(err) console.log(err)
-//     console.log(users)
-// })
+
 //varify token
 const verifyToken=(req, res, next)=>{
 	const bearerHeader = req.headers['authorization'];
@@ -45,9 +46,8 @@ const verifyToken=(req, res, next)=>{
 	}
 }
 //fetch all users
-app.get("/", verifyToken, (req, res) => {
+app.get("/", (req, res) => {
 	User.find().then((result) => {
-		// console.log(result);
 		res.send(result)
 	}).catch(err => console.log(err))
 })
@@ -55,13 +55,30 @@ app.get("/", verifyToken, (req, res) => {
 app.post('/login', jsonParser, (req, res) => {
 	User.findOne({ email: req.body.email })
 		.then((data) => {
-			var resPassword = data.password;
-			if (resPassword == req.body.password) {
-				jwt.sign({ data }, jwtKey, { expiresIn: '300s' }, (err, token) => {
-					res.status(200).json({ token })
-				})
+			if(data!=null){
+				console.log("wellcome",data)
+				res.status(200)
+				// res.end("Wellcone!")
+				// if (req.body.password===data.email && req.body.password==data.password) {
+				// 	// jwt.sign({ data }, jwtKey, { expiresIn: '300s' }, (err, token) => {
+				// 		jwt.sign({ data }, jwtKey,  (err, token) => {
+				// 		res.status(200).json({ token })
+				// 	})
+				// }
 			}
+			else{
+				console.log("wellcome!!**!!",data)
+				res.status(401)
+				res.end("Wellcone!")
+			}
+			// var resPassword = data.password;
+			// if (resPassword == req.body.password) {
+			// 	jwt.sign({ data }, jwtKey, { expiresIn: '300s' }, (err, token) => {
+			// 		res.status(200).json({ token })
+			// 	})
+			// }
 		})
+		.catch(err=>console.log("err", err))
 })
 
 // {
@@ -73,13 +90,31 @@ app.post('/login', jsonParser, (req, res) => {
 
 // POST API for posting for data
 app.post("/register", jsonParser, (req, res) => {
-	const data = new User(req.body)
-	console.log(">>", req.body.name)
-	data.save().then((result) => {
-		console.log("data saved")
-		res.status(201).json(result)
-	})
-		.catch((error) => console.log(error))
+	const token = jwt.sign({ req:req.toString() }, jwtKey);
+	console.log("token", token)
+
+	// const data = new User(
+	// 	{
+	// 		name: req.body.name,
+	// 		email: req.body.email,
+	// 		address: req.body.address,
+	// 		password: req.body.password
+	// 	}
+	// )
+	// console.log(">>", req.body)
+	// data.save()
+	// .then((result) => {
+	// 	if(result!=null){
+	// 		console.log("wellcome",result)
+	// 		res.status(200)
+	// 		res.end("welcome")
+	// 	}
+	// 	else{
+	// 		console.log("wellcome!!**!!",result)
+	// 		res.status(401)
+	// 	}
+	// })
+	// .catch(err=>console.log("err", err))
 });
 
 //DELETE  user
@@ -97,4 +132,4 @@ app.put("/upadte/:id", (req, res) => {
 		}).catch(err => console.log(err))
 })
 
-app.listen(4000)
+app.listen(5000)
