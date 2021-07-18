@@ -27,9 +27,7 @@ mongoose.connect(dbUrl, {
 //varify token
 const verifyToken=(req, res, next)=>{
 	const bearerHeader = req.headers['authorization'];
-	
 	if(typeof bearerHeader !== 'undefined'){
-		// const bearer = bearerHeader.split(' ')
 		req.token=bearerHeader;
 		console.log(bearerHeader)
 		jwt.verify(req.token, jwtKey, (err, authData)=>{
@@ -45,8 +43,9 @@ const verifyToken=(req, res, next)=>{
 		res.send("result:Token not provided!")
 	}
 }
+
 //fetch all users
-app.get("/", (req, res) => {
+app.get("/",verifyToken, (req, res) => {
 	User.find().then((result) => {
 		res.send(result)
 	}).catch(err => console.log(err))
@@ -58,13 +57,12 @@ app.post('/login', jsonParser, (req, res) => {
 			if(data!=null){
 				console.log("wellcome",data)
 				res.status(200)
-				// res.end("Wellcone!")
-				// if (req.body.password===data.email && req.body.password==data.password) {
-				// 	// jwt.sign({ data }, jwtKey, { expiresIn: '300s' }, (err, token) => {
-				// 		jwt.sign({ data }, jwtKey,  (err, token) => {
-				// 		res.status(200).json({ token })
-				// 	})
-				// }
+				res.end("Wellcone!")
+				if (req.body.password===data.email && req.body.password==data.password) {
+					jwt.sign({ data }, jwtKey, { expiresIn: '300s' }, (err, token) => {
+						res.status(200).json({ token })
+					})
+				}
 			}
 			else{
 				console.log("wellcome!!**!!",data)
@@ -81,40 +79,35 @@ app.post('/login', jsonParser, (req, res) => {
 		.catch(err=>console.log("err", err))
 })
 
-// {
-//     name: req.body.name,
-//     email: req.body.email,
-//     address: req.body.address,
-//     password: req.body.password
-// }
 
 // POST API for posting for data
 app.post("/register", jsonParser, (req, res) => {
 	const token = jwt.sign({ req:req.toString() }, jwtKey);
 	console.log("token", token)
 
-	// const data = new User(
-	// 	{
-	// 		name: req.body.name,
-	// 		email: req.body.email,
-	// 		address: req.body.address,
-	// 		password: req.body.password
-	// 	}
-	// )
-	// console.log(">>", req.body)
-	// data.save()
-	// .then((result) => {
-	// 	if(result!=null){
-	// 		console.log("wellcome",result)
-	// 		res.status(200)
-	// 		res.end("welcome")
-	// 	}
-	// 	else{
-	// 		console.log("wellcome!!**!!",result)
-	// 		res.status(401)
-	// 	}
-	// })
-	// .catch(err=>console.log("err", err))
+	const data = new User(
+		{
+			name: req.body.name,
+			email: req.body.email,
+			address: req.body.address,
+			password: req.body.password,
+			token:token
+		}
+	)
+	console.log(">>", req.body)
+	data.save()
+	.then((result) => {
+		if(result!=null){
+			console.log("wellcome",result)
+			res.status(200)
+			res.end("welcome")
+		}
+		else{
+			console.log("wellcome!!**!!",result)
+			res.status(401)
+		}
+	})
+	.catch(err=>console.log("err", err))
 });
 
 //DELETE  user
